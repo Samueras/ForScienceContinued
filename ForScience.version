@@ -1,0 +1,37 @@
+{
+  "NAME":"ForScience!",
+  "URL":"https://github.com/Xarun/ForScience",
+  "DOWNLOAD":"https://github.com/Xarun/ForScience/releases",
+  "GITHUB":
+  {
+    "USERNAME":"Xarun",
+    "REPOSITORY":"https://github.com/Xarun/ForScience",
+    "ALLOW_PRE_RELEASE":false,
+  },
+	"CHANGE_LOG_URL":"https://github.com/Xarun/ForScience/blob/master/changelog.txt",
+  "VERSION":
+  {
+    "MAJOR":0,
+    "MINOR":25,
+    "PATCH":0,
+    "BUILD":0
+  },
+  "KSP_VERSION":
+  {
+    "MAJOR":0,
+    "MINOR":90,
+    "PATCH":0
+  },
+  "KSP_VERSION_MIN":
+  {
+    "MAJOR":0,
+    "MINOR":90,
+    "PATCH":0
+  },
+  "KSP_VERSION_MAX":
+  {
+    "MAJOR":0,
+    "MINOR":90,
+    "PATCH":0
+  }
+}
