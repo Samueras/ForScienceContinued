@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -77,7 +77,7 @@ namespace ForScience
     private void OnGuiAppLauncherReady()
     {
       sprite = PackedSprite.Create("ForScience.Button.Sprite", Vector3.zero);
-      sprite.SetMaterial(new Material(Shader.Find("Sprite/Vertex Colored")) { mainTexture = GameDatabase.Instance.GetTexture("ForScience/icon_on", false) });
+      sprite.SetMaterial(new Material(Shader.Find("Sprite/Vertex Colored")) { mainTexture = GameDatabase.Instance.GetTexture("ForScience/icon", false) });
       sprite.renderer.sharedMaterial.mainTexture.filterMode = FilterMode.Point;
       sprite.Setup(38f, 38f);
       sprite.SetFramerate(settings.spriteAnimationFPS);
