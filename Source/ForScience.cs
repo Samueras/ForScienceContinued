@@ -10,19 +10,26 @@ using UnityEngine;
  *		This code is licensed under the Attribution-ShareAlike 4.0 (CC BY-SA 4.0)
  *		creative commons license. See (http://creativecommons.org/licenses/by-sa/4.0/)
  *		for full details.
- *		Modified by	SpaceTiger(http://forum.kerbalspaceprogram.com/members/137260)
+ *		Modified by	SpaceTiger(http://forum.kerbalspaceprogram.com/members/137260) and
+ *		by	SpaceKitty(http://forum.kerbalspaceprogram.com/members/137262)
+ *		
  *		Original Thread: http://forum.kerbalspaceprogram.com/threads/76437
+ *		Origianl GitHub: https://github.com/WaveFunctionP/ForScience
+ *		
+ *  Modified Github: https://github.com/Xarun/ForScience
  *		
  * 
  *		to-do: 
- *						currently nothing
+ *						check if eva is possible
+ *						tooltips for more accurate descriptions/more acurate descriptions
+ *						
  */
 namespace ForScience
 {
   [KSPAddon(KSPAddon.Startup.Flight, false)]
   public class ForScience : MonoBehaviour
   {
-
+  
     //GUI
     private GUIStyle windowStyle, labelStyle, toggleStyle, textStyle;
     private bool initStyle = false;
@@ -96,16 +103,13 @@ namespace ForScience
       sprite.AddAnimation(normal);
       sprite.AddAnimation(anim);
 
-      /*sprite.PlayAnim("Stopped");
-
-      sprite.PauseAnim();*/
       if (settings.autoScience)
       {
-        ForScience.setAppLauncherAnimation("on");
+        setAppLauncherAnimation("on");
       }
       else
       {
-        ForScience.setAppLauncherAnimation("off");
+        setAppLauncherAnimation("off");
       }
       this.button = ApplicationLauncher.Instance.AddModApplication(
         //ButtonState(true), //RUIToggleButton.onTrue
@@ -208,21 +212,41 @@ namespace ForScience
     {
       foreach (ModuleScienceExperiment currentExperiementCollectData in experimentList)
       {
-        if (currentExperiementCollectData.GetData().Count() == 1) IsDataToCollect = true;
+        if (currentExperiementCollectData.GetData().Count() == 1){
+          foreach (ScienceData currentScienceData in currentExperiementCollectData.GetData())
+          {
+
+            //Debug.Log("ForScience checking " + currentScienceData.subjectID);
+            if (!container.HasData(currentScienceData))
+            {
+              //Debug.LogError("ForScience: " + container.name + " doesnt contain " + currentScienceData.subjectID);
+              IsDataToCollect = true;
+            }
+            /*else
+            {
+              Debug.LogWarning("ForScience: " + container.name + " contains " + currentScienceData.subjectID);
+            }*/
+          }
+        }
       }
     }
 
     private void TransferScience()
     {
 
-      containerList = currentVessel.FindPartModulesImplementing<ModuleScienceContainer>();
       experimentList = currentVessel.FindPartModulesImplementing<ModuleScienceExperiment>();
+      //experimentList.
+      if (container == null)
+      {
+        containerList = currentVessel.FindPartModulesImplementing<ModuleScienceContainer>();
+        container = containerList[0];
+      }
 
-      if (container == null) container = containerList[0];
-
-      //Debug.Log("[For Science] Tranfering science to container.");
+      //Debug.Log("[For Science] Tranfering science to container." + experimentList.ToString());
       if (settings.transferScience)
-        container.StoreData(experimentList.Cast<IScienceDataContainer>().ToList(), true);
+      {
+        container.StoreData(experimentList.Cast<IScienceDataContainer>().ToList(), false);
+      }
 
       IsDataToCollect = false;
     }

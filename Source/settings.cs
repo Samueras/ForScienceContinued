@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,10 +9,13 @@ using UnityEngine;
  *		ForScience.settings
  *		Addition to the ForScience mod
  *		Original code from SpaceTiger(http://forum.kerbalspaceprogram.com/members/137260)
+ *		and	SpaceKitty(http://forum.kerbalspaceprogram.com/members/137262)
  *		
  *		This code is licensed under the Attribution-ShareAlike 4.0 (CC BY-SA 4.0)
  *		creative commons license. See (http://creativecommons.org/licenses/by-sa/4.0/)
  *		for full details.
+ *		
+ *  Original Github: https://github.com/Xarun/ForScience
  *	
  *		to-do: 
  *						currently nothing
