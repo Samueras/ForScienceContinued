@@ -4,8 +4,11 @@ v 0.25
   * icon animation speed
   * science cutoff value
   * toggle to run one-time only science
-  * toggle to transfer science to a container
+	* toggle to restrict EVA-Reports if the vessel is landed and the kerbal is mid air or holding to a ladder
+  * toggle to transfer science to a specifiable container
  * Added checks so if science gets transfered it doesnt get dump
+ * Added tooltips for more descriptions so settings are more clear
+ * Should work with DMModuleScienceAnimate but has some small issues
  
 v 0.24.2-1 Bug fixes
  * Science mode support

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using UnityEngine;
+using KSP;
 
 /**
  *		ForScience.settings
@@ -32,14 +33,17 @@ namespace ForScience
     public static bool runOneTimeScience = false;
     public static bool transferScience = false;
     public static bool showSettings = false;
+    public static bool doEVAonlyIfOnGroundWhenLanded = true;
     public static Rect windowPosition = new Rect(0f, 0f, 0f, 0f);
-    private static string settingsPath = KSPUtil.ApplicationRootPath.Replace("\\", "/") + "GameData/ForScience/settings.cfg";
+    private static string settingsPath = KSPUtil.ApplicationRootPath + "GameData/ForScience/PluginData/";
+    private static string settingsFile = settingsPath+"settings.cfg";
     private static string ForScienceSettingsNode = "ForScienceSettings";
     private static ConfigNode settingsContainer = new ConfigNode(ForScienceSettingsNode);
 
     public static void saveToDisk()
     {
       ConfigNode savenode = new ConfigNode();
+
       addValueToContainer("scienceCutoff", scienceCutoffString);
       addValueToContainer("spriteAnimationFPS", spriteAnimationFPSString);
       addValueToContainer("autoScience", autoScience.ToString());
@@ -48,9 +52,10 @@ namespace ForScience
 
       addValueToContainer("windowPositionX", windowPosition.x.ToString());
       addValueToContainer("windowPositionY", windowPosition.y.ToString());
-
       savenode.AddNode(settingsContainer);
-      savenode.Save(settingsPath);
+
+      Directory.CreateDirectory(settingsPath);
+      savenode.Save(settingsFile);
     }
 
     public static void save()
@@ -64,37 +69,12 @@ namespace ForScience
         settings.scienceCutoffString = "0";
       }
 
-      settings.scienceCutoff = int.Parse(settings.scienceCutoffString);
-      settings.spriteAnimationFPS = int.Parse(settings.spriteAnimationFPSString);
-      ForScience.sprite.SetFramerate(settings.spriteAnimationFPS); ;
-      ForScience.resetStates();
+      float.TryParse(settings.scienceCutoffString, out settings.scienceCutoff);
+      float.TryParse(settings.spriteAnimationFPSString, out settings.spriteAnimationFPS);
+      ForScience.sprite.SetFramerate(settings.spriteAnimationFPS);
+      ForScience.UpdateCurrent();
       ForScience.RunScience();
-      foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes(ForScienceSettingsNode))
-      {
-        if (!node.HasValue("scienceCutoff"))
-          node.AddValue("scienceCutoff", "");
-        if (!node.HasValue("spriteAnimationFPS"))
-          node.AddValue("spriteAnimationFPS", "");
-        if (!node.HasValue("autoScience"))
-          node.AddValue("autoScience", "");
-        if (!node.HasValue("runOneTimeScience"))
-          node.AddValue("runOneTimeScience", "");
-        if (!node.HasValue("transferScience"))
-          node.AddValue("transferScience", "");
-        if (!node.HasValue("windowPositionX"))
-          node.AddValue("windowPositionX", "");
-        if (!node.HasValue("windowPositionY"))
-          node.AddValue("windowPositionY", "");
-
-        node.AddValue("scienceCutoff", scienceCutoffString);
-        node.AddValue("spriteAnimationFPS", spriteAnimationFPSString);
-        node.AddValue("autoScience", autoScience.ToString());
-        node.AddValue("runOneTimeScience", runOneTimeScience.ToString());
-        node.AddValue("transferScience", transferScience.ToString());
-
-        node.AddValue("windowPositionX", windowPosition.x.ToString());
-        node.AddValue("windowPositionY", windowPosition.y.ToString());
-      }
+      settings.saveToDisk();
     }
     private static void addValueToContainer(string name, string value)
     {
@@ -109,37 +89,42 @@ namespace ForScience
     }
     public static void load()
     {
-      //Debug.Log("ForScience: Loading settings");
-      foreach (ConfigNode node in GameDatabase.Instance.GetConfigNodes(ForScienceSettingsNode))
+      try { 
+        foreach (ConfigNode node in ConfigNode.Load(settingsFile).GetNodes())
+        {
+          if (node.HasValue("scienceCutoff"))
+          {
+            scienceCutoffString = node.GetValue("scienceCutoff");
+          }
+          if (node.HasValue("spriteAnimationFPS"))
+          {
+            spriteAnimationFPSString = node.GetValue("spriteAnimationFPS");
+          }
+          if (node.HasValue("runOneTimeScience"))
+          {
+            runOneTimeScience = Convert.ToBoolean(node.GetValue("runOneTimeScience"));
+          }
+          if (node.HasValue("transferScience"))
+          {
+            transferScience = Convert.ToBoolean(node.GetValue("transferScience"));
+          }
+          if (node.HasValue("autoScience"))
+          {
+            autoScience = Convert.ToBoolean(node.GetValue("autoScience"));
+          }
+          if (node.HasValue("windowPositionX"))
+          {
+            windowPosition.x = float.Parse(node.GetValue("windowPositionX"));
+          }
+          if (node.HasValue("windowPositionY"))
+          {
+            windowPosition.y = float.Parse(node.GetValue("windowPositionY"));
+          }
+        }
+      }
+      catch (NullReferenceException)
       {
-        if (node.HasValue("scienceCutoff"))
-        {
-          scienceCutoffString = node.GetValue("scienceCutoff");
-        }
-        if (node.HasValue("spriteAnimationFPS"))
-        {
-          spriteAnimationFPSString = node.GetValue("spriteAnimationFPS");
-        }
-        if (node.HasValue("runOneTimeScience"))
-        {
-          runOneTimeScience = Convert.ToBoolean(node.GetValue("runOneTimeScience"));
-        }
-        if (node.HasValue("transferScience"))
-        {
-          transferScience = Convert.ToBoolean(node.GetValue("transferScience"));
-        }
-        if (node.HasValue("autoScience"))
-        {
-          autoScience = Convert.ToBoolean(node.GetValue("autoScience"));
-        }
-        if (node.HasValue("windowPositionX"))
-        {
-          windowPosition.x = float.Parse(node.GetValue("windowPositionX"));
-        }
-        if (node.HasValue("windowPositionY"))
-        {
-          windowPosition.y = float.Parse(node.GetValue("windowPositionY"));
-        }
+      
       }
     }
   }
