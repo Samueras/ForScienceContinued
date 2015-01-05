@@ -66,11 +66,13 @@ namespace ForScience
     private static List<String> toolbarStrings = new List<String>();
     private float tooltipHeight = 0;
     private string CurrentTooltip;
-    private Rect tooltipRect = new Rect(0, 0, 200, 20);
+    private Rect tooltipRect = new Rect(0, 0, 230, 20);
     private float lastWindowHeight;
     private bool windowShrinked;
     private bool setWindowShrinked;
     private GUIStyle containerStyle;
+    private static int experimentNumber;
+    private static int experimentLimit;
     public static Vessel parentVessel { get; set; }
 
     private void Awake()
@@ -256,6 +258,8 @@ namespace ForScience
         if (shipCotainsExperiments.ContainsKey(experiment.id))
         {
           currentScienceValue = ResearchAndDevelopment.GetNextScienceValue(experiment.baseValue * experiment.dataScale, currentScienceSubject) * HighLogic.CurrentGame.Parameters.Career.ScienceGainMultiplier;
+          if (shipCotainsExperiments[experiment.id] >= 2)//taken from scienceAlert to get somewhat accurate science values after the second experiment
+            currentScienceValue = currentScienceValue/ Mathf.Pow(4f, shipCotainsExperiments[experiment.id] - 2);
           shipCotainsExperiments[experiment.id]++;
         }
         else
@@ -273,7 +277,6 @@ namespace ForScience
             !currentExperiment.Deployed &&
             !(runningExperiments.ContainsKey(experiment.id) && runningExperiments[experiment.id] > lastUpdate))
         {
-          //Debug.LogError("[For Science] finished checks -> all systems go");
           if (runningExperiments.ContainsKey(experiment.id))
           {
             runningExperiments.Remove(experiment.id);
@@ -281,7 +284,28 @@ namespace ForScience
           
           dataIsInContainer = false;
           checkDataInContainer(currentScienceSubject, container.GetData());
+          //Debug.Log("[For Science] Checking experiment: " + experiment.id);
           checkDataInContainer(currentScienceSubject, currentExperiment.GetData());
+          try//quick and dirty check for DMagic Orbital Science need something better here but for now it works okayish
+          {
+            if (!int.TryParse(currentExperiment.GetType().GetField("experimentNumber").GetValue(currentExperiment).ToString(), out  experimentNumber) ||
+                !int.TryParse(currentExperiment.GetType().GetField("experimentLimit").GetValue(currentExperiment).ToString(), out  experimentLimit)   ||
+                ((experimentNumber >= experimentLimit) && experimentLimit >= 1))
+            { 
+              continue;
+            }
+            /*else
+            {
+              if ((experimentNumber >= experimentLimit) && experimentLimit >= 1)
+              {
+                continue;
+              }
+            }*/
+          }
+          catch (Exception e)
+          {
+            Debug.LogException(e);
+          }         
 
           if (!dataIsInContainer)
           {
@@ -308,13 +332,13 @@ namespace ForScience
         }
       }
     }
-
     private static void checkDataInContainer(ScienceSubject ScienceSubject, ScienceData[] ScienceData)
     {
       if (dataIsInContainer)
         return;
       foreach (ScienceData data in ScienceData)
       {
+        Debug.Log("[For Science] data.subjectID: " + data.subjectID);
         if (ScienceSubject.id.Contains(data.subjectID))
         {
           dataIsInContainer = true;
@@ -357,9 +381,7 @@ namespace ForScience
           windowShrinked  = true;
         }
         settings.windowPosition = GUILayout.Window(104234, settings.windowPosition, MainWindow, "For Science", windowStyle);
-        
-        settings.windowPosition.x = Mathf.Clamp(settings.windowPosition.x, 0, Screen.width - settings.windowPosition.width);
-        settings.windowPosition.y = Mathf.Clamp(settings.windowPosition.y, 0, Screen.height - settings.windowPosition.height);
+        clampToScreen(ref settings.windowPosition);
         if (settings.windowPosition.height != 0)
         {
           lastWindowHeight  = settings.windowPosition.height;
@@ -367,14 +389,18 @@ namespace ForScience
         if (!String.IsNullOrEmpty(CurrentTooltip)) { 
           tooltipRect.x = Input.mousePosition.x+10;
           tooltipRect.y = Screen.height - Input.mousePosition.y+10;
+          clampToScreen(ref tooltipRect);
           tooltipRect.height  = tooltipHeight;
           GUI.Label(tooltipRect, CurrentTooltip, tooltipStyle);
-          GUI.backgroundColor = Color.blue;
           GUI.depth = 0;
         }
       }
     }
-
+    private static void clampToScreen(ref Rect rect)
+    {
+      rect.x = Mathf.Clamp(rect.x, 0, Screen.width - rect.width);
+      rect.y = Mathf.Clamp(rect.y, 0, Screen.height - rect.height);
+    }
     private void InitStyle()
     {
       labelStyle = new GUIStyle(HighLogic.Skin.label);

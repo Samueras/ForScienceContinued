@@ -1,6 +1,11 @@
+v 0.25.1
+ * A quick checks for DMagic Orbital Science
+ * Clamp tooltip to the screen
+ * Fixed the bug that changed the whole ui color (stupid mistake)
+ 
 v 0.25
  * Stock applauncher integration
- * toggleable settings with settings for:
+ * Toggleable settings with settings for:
   * icon animation speed
   * science cutoff value
   * toggle to run one-time only science
