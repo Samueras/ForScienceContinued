@@ -43,6 +43,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ForScience.cs" />
+    <Compile Include="Helper.cs" />
     <Compile Include="settings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
