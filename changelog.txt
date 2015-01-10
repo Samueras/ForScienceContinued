@@ -1,3 +1,7 @@
+v 0.25.2
+ * More checks for DMagic Orbital Science - thanks Sephiroth_018/Sephiroth018
+ * Fixed science calculations when multiple experiments get deployed
+ 
 v 0.25.1
  * A quick checks for DMagic Orbital Science
  * Clamp tooltip to the screen

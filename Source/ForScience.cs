@@ -203,14 +203,13 @@ namespace ForScience
     //private void Update()
     private void FixedUpdate()
     {
-      Utilities.LogDebugMessage("Run!" + FlightGlobals.ActiveVessel.name);
       if ((HighLogic.CurrentGame.Mode == Game.Modes.CAREER || HighLogic.CurrentGame.Mode == Game.Modes.SCIENCE_SANDBOX) &&
           settings.autoScience &&
           FlightGlobals.ready &&
           Planetarium.GetUniversalTime() > lastUpdate)
       {
         lastUpdate = Planetarium.GetUniversalTime() + 1;
-
+        Utilities.LogDebugMessage("Run!" + FlightGlobals.ActiveVessel.name);
         UpdateCurrent();
         if (IsDataToCollect && settings.transferScience && !currentVessel.isEVA)
           TransferScience();
@@ -230,7 +229,6 @@ namespace ForScience
     {
       if (!settings.autoScience)
         return;
-      shipCotainsExperiments.Clear();
       if (currentVessel.isEVA && kerbalEVAPart == null)
       {
         kerbalEVAParts = currentVessel.FindPartModulesImplementing<KerbalEVA>();
@@ -251,25 +249,13 @@ namespace ForScience
           fixBiome = currentBiome;
         }
         var currentScienceSubject = ResearchAndDevelopment.GetExperimentSubject(experiment, currentSituation, currentBody, fixBiome);
+        Utilities.LogDebugMessage("-------------------------------------");
         Utilities.LogDebugMessage("currentScienceSubject.id: " + currentScienceSubject.id);
         Utilities.LogDebugMessage("experiment.id: " + experiment.id);
         Utilities.LogDebugMessage("currentExperiment.experimentID: " + currentExperiment.experimentID);
 
-        float currentScienceValue = 0;
-        if (shipCotainsExperiments.ContainsKey(experiment.id))
-        {
-          currentScienceValue = ResearchAndDevelopment.GetNextScienceValue(experiment.baseValue * experiment.dataScale, currentScienceSubject) * HighLogic.CurrentGame.Parameters.Career.ScienceGainMultiplier;
-          if (shipCotainsExperiments[experiment.id] >= 2)//taken from scienceAlert to get somewhat accurate science values after the second experiment
-            currentScienceValue = currentScienceValue / Mathf.Pow(4f, shipCotainsExperiments[experiment.id] - 2);
-          shipCotainsExperiments[experiment.id]++;
-        }
-        else
-        {
-          currentScienceValue = ResearchAndDevelopment.GetScienceValue(experiment.baseValue * experiment.dataScale, currentScienceSubject) * HighLogic.CurrentGame.Parameters.Career.ScienceGainMultiplier;
-          shipCotainsExperiments.Add(experiment.id, 1);
-        }
+        float currentScienceValue = getScienceValue(experiment, currentScienceSubject);
         Utilities.LogDebugMessage("Science available is " + currentScienceValue);
-
         if (((!currentExperiment.rerunnable && settings.runOneTimeScience) || currentExperiment.rerunnable) &&
             experiment.IsAvailableWhile(currentSituation, currentBody) &&
             currentScienceValue >= settings.scienceCutoff &&
@@ -284,11 +270,12 @@ namespace ForScience
 
           dataIsInContainer = false;
           checkDataInContainer(currentScienceSubject, container.GetData());
-          Utilities.LogDebugMessage("Checking experiment: " + experiment.id);
           checkDataInContainer(currentScienceSubject, currentExperiment.GetData());
+
+          #region try-catch for DMagic Orbital Science
           try
           {
-            var conductMethod = currentExperiment.GetType().GetMethod("conduct");//thanks Sephiroth018 for this part
+            var conductMethod = currentExperiment.GetType().GetMethod("conduct");//thanks Sephiroth018 for this conduct part
             if (conductMethod != null) { 
               Utilities.LogDebugMessage("Experiment {0} is a DMagic Orbital Science experiment.", experiment.id);
 
@@ -300,18 +287,29 @@ namespace ForScience
                 continue;
               }
             }
-            if (!int.TryParse(currentExperiment.GetType().GetField("experimentNumber").GetValue(currentExperiment).ToString(), out  experimentNumber) ||
-                !int.TryParse(currentExperiment.GetType().GetField("experimentLimit").GetValue(currentExperiment).ToString(), out  experimentLimit) ||
-                ((experimentNumber >= experimentLimit) && experimentLimit >= 1))
+            if (int.TryParse(currentExperiment.GetType().GetField("experimentNumber").GetValue(currentExperiment).ToString(), out  experimentNumber) &&
+                int.TryParse(currentExperiment.GetType().GetField("experimentLimit").GetValue(currentExperiment).ToString(), out  experimentLimit))
             {
+              if ((experimentNumber >= experimentLimit) && experimentLimit >= 1) {
               Utilities.LogDebugMessage("Experiment {0} can't be conducted cause the experimentLimit is reached!", experiment.id);
               continue;
+              }
+              else if (experimentNumber > 0)
+              {
+                if (shipCotainsExperiments.ContainsKey(currentScienceSubject.id))
+                  shipCotainsExperiments[currentScienceSubject.id] += experimentNumber;
+                else
+                  shipCotainsExperiments.Add(currentScienceSubject.id, experimentNumber + 1);
+                currentScienceValue = getScienceValue(experiment, currentScienceSubject);
+                Utilities.LogDebugMessage("Experiment is a DMagic Orbital Science experiment. Science value changed to: " + currentScienceValue);
+              }
             }
           }
           catch (Exception e)
           {
             Debug.LogException(e);
           }
+          #endregion
 
           if (!dataIsInContainer)
           {
@@ -332,11 +330,31 @@ namespace ForScience
               Debug.LogError("Failed to invoke \"DeployExperiment\" using GetType(), falling back to base type after encountering exception " + e);
               currentExperiment.DeployExperiment();
             }
+            if (shipCotainsExperiments.ContainsKey(currentScienceSubject.id))
+              shipCotainsExperiments[currentScienceSubject.id]++;
+            else
+              shipCotainsExperiments.Add(currentScienceSubject.id, 1);
             IsDataToCollect = true;
           }
 
         }
       }
+    }
+
+    private static float getScienceValue(ScienceExperiment experiment,ScienceSubject currentScienceSubject)
+    {
+      float currentScienceValue;
+      if (shipCotainsExperiments.ContainsKey(currentScienceSubject.id))
+      {
+        currentScienceValue = ResearchAndDevelopment.GetNextScienceValue(experiment.baseValue * experiment.dataScale, currentScienceSubject) * HighLogic.CurrentGame.Parameters.Career.ScienceGainMultiplier;
+        if (shipCotainsExperiments[currentScienceSubject.id] >= 2)//taken from scienceAlert to get somewhat accurate science values after the second experiment
+          currentScienceValue = currentScienceValue / Mathf.Pow(4f, shipCotainsExperiments[currentScienceSubject.id] - 2);
+      }
+      else
+      {
+        currentScienceValue = ResearchAndDevelopment.GetScienceValue(experiment.baseValue * experiment.dataScale, currentScienceSubject) * HighLogic.CurrentGame.Parameters.Career.ScienceGainMultiplier;
+      }
+      return currentScienceValue;
     }
     private static void checkDataInContainer(ScienceSubject ScienceSubject, ScienceData[] ScienceData)
     {
@@ -365,17 +383,26 @@ namespace ForScience
       else
         currentBiome = ScienceUtil.GetExperimentBiome(currentBody, currentVessel.latitude, currentVessel.longitude);
 
+      shipCotainsExperiments.Clear();
       experimentList = currentVessel.FindPartModulesImplementing<ModuleScienceExperiment>();
-      if (container == null)
-      {
         toolbarStrings.Clear();
         containerList = currentVessel.FindPartModulesImplementing<ModuleScienceContainer>();
-        foreach (ModuleScienceContainer current in containerList)
+        foreach (ModuleScienceContainer currentContainer in containerList)
         {
-          toolbarStrings.Add(current.part.partInfo.title);
+          foreach (ScienceData currentData in currentContainer.GetData())
+          {
+            if (shipCotainsExperiments.ContainsKey(currentData.subjectID))
+            {
+              shipCotainsExperiments[currentData.subjectID]++;
+            }
+            else
+            {
+              shipCotainsExperiments.Add(currentData.subjectID, 1);
+            }
+          }
+          toolbarStrings.Add(currentContainer.part.partInfo.title);
         }
         container = containerList[0];
-      }
     }
 
 
