@@ -1,4 +1,4 @@
-ForScience
+ForScienceContinued!
 ==========
 
 A science enhancement plugin for Kerbal Space Program. By <a rel="WaveFunctionP" href="http://forum.kerbalspaceprogram.com/members/107709">WaveFunctionP</a>(<a rel="GitHub" href="https://github.com/WaveFunctionP">GitHub</a>).
