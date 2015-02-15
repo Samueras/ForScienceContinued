@@ -1,3 +1,9 @@
+v 0.26
+ * Fixed Surface sample performed in career without R&D upgrade issue #3
+ * Changed: Path of mod
+ * Changed: Utilities now in own dll
+  * Using KerboKatzUtilities v 1.0.0
+ 
 v 0.25.2
  * More checks for DMagic Orbital Science - thanks Sephiroth_018/Sephiroth018
  * Fixed science calculations when multiple experiments get deployed

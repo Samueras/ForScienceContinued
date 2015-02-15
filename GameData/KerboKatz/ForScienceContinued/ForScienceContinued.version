@@ -1,19 +1,19 @@
 {
-  "NAME":"ForScience!",
-  "URL":"https://github.com/Xarun/ForScience",
-  "DOWNLOAD":"https://github.com/Xarun/ForScience/releases",
+  "NAME":"ForScienceContinued!",
+  "URL":"https://github.com/Xarun/ForScienceContinued",
+  "DOWNLOAD":"https://github.com/Xarun/ForScienceContinued/releases",
   "GITHUB":
   {
     "USERNAME":"Xarun",
-    "REPOSITORY":"https://github.com/Xarun/ForScience",
+    "REPOSITORY":"https://github.com/Xarun/ForScienceContinued",
     "ALLOW_PRE_RELEASE":false,
   },
-	"CHANGE_LOG_URL":"https://github.com/Xarun/ForScience/blob/master/changelog.txt",
+	"CHANGE_LOG_URL":"https://github.com/Xarun/ForScienceContinued/blob/master/changelog.txt",
   "VERSION":
   {
     "MAJOR":0,
-    "MINOR":25,
-    "PATCH":2,
+    "MINOR":26,
+    "PATCH":0,
     "BUILD":0
   },
   "KSP_VERSION":
