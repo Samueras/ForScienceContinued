@@ -25,32 +25,17 @@ using UnityEngine;
 namespace KerboKatz
 {
   [KSPAddon(KSPAddon.Startup.Flight, false)]
-  internal class ForScienceContinued : MonoBehaviour
+  partial class ForScienceContinued : KerboKatzBase
   {
-    private ApplicationLauncherButton button;
     private bool dataIsInContainer                         = false;
-    private bool doEVAonlyIfOnGroundWhenLanded;
-    private bool initStyle                                 = false;
     private bool IsDataToCollect                           = false;
-    private bool runOneTimeScience;
-    private bool setWindowShrinked;
-    private bool transferScience;
-    private bool windowShrinked;
     private CelestialBody currentBody                      = null;
     private Dictionary<string, double> runningExperiments  = new Dictionary<string, double>();
     private Dictionary<string, int> shipCotainsExperiments = new Dictionary<string, int>();
     private double lastUpdate                              = 0;
     private ExperimentSituations currentSituation          = 0;
-    private float lastWindowHeight;
-    private float tooltipHeight                            = 0;
-    private GUIStyle buttonStyle;
-    private GUIStyle containerStyle;
-    private GUIStyle numberFieldStyle;
-    private GUIStyle tooltipStyle;
-    private GUIStyle windowStyle, labelStyle, toggleStyle, textStyle;
     private int experimentLimit;
     private int experimentNumber;
-    private int toolbarInt;
     private KerbalEVA kerbalEVAPart                        = null;
     private List<KerbalEVA> kerbalEVAParts                 = null;
     private List<ModuleScienceContainer> containerList     = null;
@@ -59,32 +44,24 @@ namespace KerboKatz
     private List<String> toolbarStrings                    = new List<String>();
     private ModuleScienceContainer container               = null;
     private PackedSprite sprite; // animations: Spin, Unlit
-    private Rect tooltipRect                               = new Rect(0, 0, 230, 20);
-    private Rect windowPosition                            = new Rect(0f, 0f, 0f, 0f);
     private ScienceExperiment experiment;
-    private settings currentSettings;
     private string currentBiome                            = null;
-    private string CurrentTooltip;
-    private string modName                                 = "ForScienceContinued";
-    private string scienceCutoff;
-    private string spriteAnimationFPS;
     private Vessel currentVessel                           = null;
     private Vessel parentVessel;
 
-    private void Awake()
+    public ForScienceContinued()
     {
-      if (!Utilities.checkUtilitiesSupport(new Version(1, 0, 0), modName))
+      modName = "ForScienceContinued";
+      requiresUtilities = new Version(1, 0, 4);
+    }
+    public override void Start()
+    {
+      if (!(HighLogic.CurrentGame.Mode == Game.Modes.CAREER || HighLogic.CurrentGame.Mode == Game.Modes.SCIENCE_SANDBOX))
       {
         Destroy(this);
         return;
       }
-      GameEvents.onGUIApplicationLauncherReady.Add(OnGuiAppLauncherReady);
-    }
-
-    private void Start()
-    {
-      currentSettings = new settings();
-      currentSettings.load("ForScienceContinued", "settings", "ForScienceContinued");
+      base.Start();
       currentSettings.setDefault("scienceCutoff", "2");
       currentSettings.setDefault("spriteAnimationFPS", "25");
       currentSettings.setDefault("autoScience", "false");
@@ -97,29 +74,23 @@ namespace KerboKatz
       windowPosition.x = currentSettings.getFloat("windowX");
       windowPosition.y = currentSettings.getFloat("windowY");
 
-      scienceCutoff = currentSettings.getString("scienceCutoff");
-      spriteAnimationFPS = currentSettings.getString("spriteAnimationFPS");
-      transferScience = currentSettings.getBool("transferScience");
+      scienceCutoff                 = currentSettings.getString("scienceCutoff");
+      spriteAnimationFPS            = currentSettings.getString("spriteAnimationFPS");
+      transferScience               = currentSettings.getBool("transferScience");
       doEVAonlyIfOnGroundWhenLanded = currentSettings.getBool("doEVAonlyIfOnGroundWhenLanded");
-      runOneTimeScience = currentSettings.getBool("runOneTimeScience");
+      runOneTimeScience             = currentSettings.getBool("runOneTimeScience");
 
       GameEvents.onCrewOnEva.Add(GoingEva);
-      RenderingManager.AddToPostDrawQueue(0, OnDraw);
     }
 
-    private void OnDestroy()
+    public override void OnDestroy()
     {
       GameEvents.onCrewOnEva.Remove(GoingEva);
       if (currentSettings != null)
       {
         currentSettings.set("showSettings", false);
-        currentSettings.save();
       }
-      GameEvents.onGUIApplicationLauncherReady.Remove(OnGuiAppLauncherReady);
-      if (button != null)
-      {
-        ApplicationLauncher.Instance.RemoveModApplication(button);
-      }
+      base.OnDestroy();
     }
 
     private void GoingEva(GameEvents.FromToAction<Part, Part> parts)
@@ -127,14 +98,9 @@ namespace KerboKatz
       parentVessel = parts.from.vessel;
     }
 
-    private void OnGUI()
+    public override void OnGuiAppLauncherReady()
     {
-      if ((HighLogic.CurrentGame.Mode == Game.Modes.CAREER || HighLogic.CurrentGame.Mode == Game.Modes.SCIENCE_SANDBOX) && !initStyle)
-        InitStyle();
-    }
-
-    private void OnGuiAppLauncherReady()
-    {
+      //base.OnGuiAppLauncherReady();
       sprite = PackedSprite.Create("ForScience.Button.Sprite", Vector3.zero);
       sprite.SetMaterial(new Material(Shader.Find("Sprite/Vertex Colored")) { mainTexture = Utilities.getTexture("icon", "ForScienceContinued/Textures")});
       sprite.renderer.sharedMaterial.mainTexture.filterMode = FilterMode.Point;
@@ -162,6 +128,7 @@ namespace KerboKatz
       {
         setAppLauncherAnimation("off");
       }
+
       button = ApplicationLauncher.Instance.AddModApplication(
           toggleAutoScience, 	//RUIToggleButton.onTrue
           toggleAutoScience,	//RUIToggleButton.onFalse
@@ -170,7 +137,7 @@ namespace KerboKatz
           null, //RUIToggleButton.onEnable
           null, //RUIToggleButton.onDisable
           ApplicationLauncher.AppScenes.FLIGHT, //visibleInScenes
-          sprite//GameDatabase.Instance.GetTexture("ForScience/icon_off", false) //texture
+          sprite//texture
       );
     }
 
@@ -231,8 +198,7 @@ namespace KerboKatz
         lastUpdate = Planetarium.GetUniversalTime() + 5;
         UpdateCurrent();
       }
-      if ((HighLogic.CurrentGame.Mode == Game.Modes.CAREER || HighLogic.CurrentGame.Mode == Game.Modes.SCIENCE_SANDBOX) &&
-          FlightGlobals.ready &&
+      if (FlightGlobals.ready &&
           currentSettings.getBool("autoScience") &&
           Planetarium.GetUniversalTime() > lastUpdate)
       {
@@ -240,7 +206,6 @@ namespace KerboKatz
         UpdateCurrent();
         if (Utilities.canVesselBeControlled(currentVessel))
         {
-          Utilities.debug(modName, "Run!" + currentVessel.name);
           if (IsDataToCollect && currentSettings.getBool("transferScience") && !currentVessel.isEVA)
             TransferScience();
 
@@ -285,11 +250,7 @@ namespace KerboKatz
           fixBiome = currentBiome;
         }
         var currentScienceSubject = ResearchAndDevelopment.GetExperimentSubject(experiment, currentSituation, currentBody, fixBiome);
-        float currentScienceValue = getScienceValue(experiment, currentScienceSubject);
-        Utilities.debug(modName, "-------------------------------------\ncurrentScienceSubject.id: " + currentScienceSubject.id +
-                                                          "\nexperiment.id: " + experiment.id +
-                                                          "\ncurrentExperiment.experimentID: " + currentExperiment.experimentID +
-                                                          "\nScience available is " + currentScienceValue);
+        float currentScienceValue = Utilities.getScienceValue(shipCotainsExperiments,experiment, currentScienceSubject);
 
         if (((!currentExperiment.rerunnable && currentSettings.getBool("runOneTimeScience")) || currentExperiment.rerunnable) &&
             experiment.IsAvailableWhile(currentSituation, currentBody) &&
@@ -324,6 +285,12 @@ namespace KerboKatz
                 continue;
               }
             }
+          }
+          catch (Exception)
+          {
+          }
+          try
+          {
             if (int.TryParse(currentExperiment.GetType().GetField("experimentNumber").GetValue(currentExperiment).ToString(), out  experimentNumber) &&
                 int.TryParse(currentExperiment.GetType().GetField("experimentLimit").GetValue(currentExperiment).ToString(), out  experimentLimit))
             {
@@ -338,8 +305,13 @@ namespace KerboKatz
                   shipCotainsExperiments[currentScienceSubject.id] += experimentNumber;
                 else
                   shipCotainsExperiments.Add(currentScienceSubject.id, experimentNumber + 1);
-                currentScienceValue = getScienceValue(experiment, currentScienceSubject);
+                currentScienceValue = Utilities.getScienceValue(shipCotainsExperiments, experiment, currentScienceSubject);
                 Utilities.debug(modName, "Experiment is a DMagic Orbital Science experiment. Science value changed to: " + currentScienceValue);
+                if (currentScienceValue < currentSettings.getFloat("scienceCutoff"))
+                {
+                  Utilities.debug(modName, "Experiment is a DMagic Orbital Science experiment. Science value droped below cutoff.");
+                  continue;
+                }
               }
             }
           }
@@ -351,8 +323,8 @@ namespace KerboKatz
           if (!dataIsInContainer)
           {
             Utilities.debug(modName, "Deploying! " +
-                                                              "\nScience available is " + currentScienceValue +
-                                                              "\nRunning experiment: " + experiment.id);
+                                      "\nScience available is " + currentScienceValue +
+                                      "\nRunning experiment: " + experiment.id);
 
             runningExperiments.Add(experiment.id, (lastUpdate + 10));
             //currentExperiment.DeployExperiment();
@@ -377,29 +349,12 @@ namespace KerboKatz
       }
     }
 
-    private float getScienceValue(ScienceExperiment experiment, ScienceSubject currentScienceSubject)
-    {
-      float currentScienceValue;
-      if (shipCotainsExperiments.ContainsKey(currentScienceSubject.id))
-      {
-        currentScienceValue = ResearchAndDevelopment.GetNextScienceValue(experiment.baseValue * experiment.dataScale, currentScienceSubject) * HighLogic.CurrentGame.Parameters.Career.ScienceGainMultiplier;
-        if (shipCotainsExperiments[currentScienceSubject.id] >= 2)//taken from scienceAlert to get somewhat accurate science values after the second experiment
-          currentScienceValue = currentScienceValue / Mathf.Pow(4f, shipCotainsExperiments[currentScienceSubject.id] - 2);
-      }
-      else
-      {
-        currentScienceValue = ResearchAndDevelopment.GetScienceValue(experiment.baseValue * experiment.dataScale, currentScienceSubject) * HighLogic.CurrentGame.Parameters.Career.ScienceGainMultiplier;
-      }
-      return currentScienceValue;
-    }
-
     private void checkDataInContainer(ScienceSubject ScienceSubject, ScienceData[] ScienceData)
     {
       if (dataIsInContainer)
         return;
       foreach (ScienceData data in ScienceData)
       {
-        Utilities.debug(modName, "data.subjectID: " + data.subjectID);
         if (ScienceSubject.id.Contains(data.subjectID))
         {
           dataIsInContainer = true;
@@ -451,148 +406,5 @@ namespace KerboKatz
       }
     }
 
-    private void OnDraw()
-    {
-      if (HighLogic.LoadedScene == GameScenes.FLIGHT && currentSettings.getBool("showSettings") && (HighLogic.CurrentGame.Mode == Game.Modes.CAREER || HighLogic.CurrentGame.Mode == Game.Modes.SCIENCE_SANDBOX))
-      {
-        if (windowPosition.height != 0 && windowPosition.height != lastWindowHeight || !windowShrinked)
-        {
-          windowPosition.height = 0;
-          windowShrinked        = true;
-        }
-        windowPosition          = GUILayout.Window(104234, windowPosition, MainWindow, "For Science", windowStyle);
-        Utilities.clampToScreen(ref windowPosition);
-        if (windowPosition.height != 0)
-        {
-          lastWindowHeight      = windowPosition.height;
-        }
-        if (!String.IsNullOrEmpty(CurrentTooltip))
-        {
-          tooltipRect.x         = Input.mousePosition.x + 10;
-          tooltipRect.y         = Screen.height - Input.mousePosition.y + 10;
-          Utilities.clampToScreen(ref tooltipRect);
-          tooltipRect.height    = tooltipHeight;
-          GUI.Label(tooltipRect, CurrentTooltip, tooltipStyle);
-          GUI.depth             = 0;
-        }
-      }
-    }
-
-    private void InitStyle()
-    {
-      labelStyle                       = new GUIStyle(HighLogic.Skin.label);
-      labelStyle.stretchWidth          = true;
-
-      windowStyle                      = new GUIStyle(HighLogic.Skin.window);
-      windowStyle.fixedWidth           = 250f;
-      windowStyle.padding.left         = 0;
-
-      toggleStyle                      = new GUIStyle(HighLogic.Skin.toggle);
-      toggleStyle.normal.textColor     = labelStyle.normal.textColor;
-      toggleStyle.active.textColor     = labelStyle.normal.textColor;
-
-      textStyle                        = new GUIStyle(HighLogic.Skin.label);
-      textStyle.fixedWidth             = 100f;
-      textStyle.margin.left            = 10;
-
-      containerStyle                   = new GUIStyle(GUI.skin.button);
-      containerStyle.fixedWidth        = 230f;
-      containerStyle.margin.left       = 10;
-
-      numberFieldStyle                 = new GUIStyle(HighLogic.Skin.box);
-      numberFieldStyle.fixedWidth      = 52f;
-      numberFieldStyle.fixedHeight     = 22f;
-      numberFieldStyle.alignment       = TextAnchor.MiddleCenter;
-      numberFieldStyle.margin.left     = 95;
-      numberFieldStyle.padding.right   = 7;
-
-      buttonStyle                      = new GUIStyle(GUI.skin.button);
-      buttonStyle.fixedWidth           = 127f;
-
-      tooltipStyle                     = new GUIStyle(HighLogic.Skin.label);
-      tooltipStyle.fixedWidth          = 230f;
-      tooltipStyle.padding.top         = 5;
-      tooltipStyle.padding.left        = 5;
-      tooltipStyle.padding.right       = 5;
-      tooltipStyle.padding.bottom      = 5;
-      tooltipStyle.fontSize            = 10;
-      tooltipStyle.normal.background   = Utilities.getTexture("tooltipBG", "Textures"); ;
-      tooltipStyle.normal.textColor    = Color.white;
-      tooltipStyle.border.top          = 1;
-      tooltipStyle.border.bottom       = 1;
-      tooltipStyle.border.left         = 8;
-      tooltipStyle.border.right        = 8;
-      tooltipStyle.stretchHeight       = true;
-
-      initStyle                        = true;
-    }
-
-    private void MainWindow(int windowID)
-    {
-      GUILayout.BeginVertical();
-      GUILayout.BeginHorizontal();
-      Utilities.createLabel("Animation FPS:", textStyle, "set to 0 to disable");
-      spriteAnimationFPS = Utilities.getOnlyNumbers(GUILayout.TextField(spriteAnimationFPS, 5, numberFieldStyle));
-      GUILayout.EndHorizontal();
-      GUILayout.BeginHorizontal();
-      Utilities.createLabel("Science cutoff:", textStyle, "Doesn't run any science experiment if it's value less than this number.");
-      scienceCutoff = Utilities.getOnlyNumbers(GUILayout.TextField(scienceCutoff, 5, numberFieldStyle));
-      GUILayout.EndHorizontal();
-      if (GUILayout.Toggle(doEVAonlyIfOnGroundWhenLanded, new GUIContent("Restrict EVA-Report", "If this option is turned on and the vessel is landed/splashed the kerbal wont do the EVA-Report if he isnt on the ground."), toggleStyle))
-      {
-        doEVAonlyIfOnGroundWhenLanded = true;
-      }
-      else
-      {
-        doEVAonlyIfOnGroundWhenLanded = false;
-      }
-      if (GUILayout.Toggle(runOneTimeScience, new GUIContent("Run one-time only science", "To run experiments like goo container"), toggleStyle))
-      {
-        runOneTimeScience = true;
-      }
-      else
-      {
-        runOneTimeScience = false;
-      }
-      if (GUILayout.Toggle(transferScience, new GUIContent("Transfer science to container", "Transfers all the science from experiments to the selected container.\nWARNING: makes experiments unoperable if used with \"Run one-time only science\""), toggleStyle))
-      {
-        transferScience = true;
-        GUILayout.BeginVertical();
-        if (toolbarStrings != null)
-          toolbarInt = GUILayout.SelectionGrid(toolbarInt, toolbarStrings.ToArray(), 1, containerStyle);
-        GUILayout.EndVertical();
-        setWindowShrinked = false;
-      }
-      else
-      {
-        if (!setWindowShrinked)
-        {
-          windowShrinked = false;
-          setWindowShrinked = true;
-        }
-        transferScience = false;
-      }
-      GUILayout.BeginHorizontal();
-      GUILayout.FlexibleSpace();
-      if (GUILayout.Button("Save", buttonStyle))
-      {
-        currentSettings.set("scienceCutoff", scienceCutoff);
-        currentSettings.set("spriteAnimationFPS", spriteAnimationFPS);
-        currentSettings.set("transferScience", transferScience);
-        currentSettings.set("doEVAonlyIfOnGroundWhenLanded", doEVAonlyIfOnGroundWhenLanded);
-        currentSettings.set("runOneTimeScience", runOneTimeScience);
-        currentSettings.save();
-        currentSettings.set("showSettings", false);
-        if (containerList != null)
-          container = containerList[toolbarInt];
-        sprite.SetFramerate(currentSettings.getFloat("spriteAnimationFPS"));
-      }
-      GUILayout.FlexibleSpace();
-      GUILayout.EndHorizontal();
-      tooltipHeight = tooltipStyle.CalcHeight(new GUIContent(GUI.tooltip), tooltipStyle.fixedWidth);
-      CurrentTooltip = GUI.tooltip;
-      GUILayout.EndVertical();
-      GUI.DragWindow();
-    }
   }
 }

@@ -1,3 +1,5 @@
+v 0.26.1
+ * KerboKatzUtilities compatibility release 
 v 0.26
  * Fixed Surface sample performed in career without R&D upgrade issue #3
  * Changed: Path of mod
