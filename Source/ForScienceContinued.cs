@@ -98,49 +98,51 @@ namespace KerboKatz
       parentVessel = parts.from.vessel;
     }
 
-    public override void OnGuiAppLauncherReady()
-    {
-      //base.OnGuiAppLauncherReady();
-      sprite = PackedSprite.Create("ForScience.Button.Sprite", Vector3.zero);
-      sprite.SetMaterial(new Material(Shader.Find("Sprite/Vertex Colored")) { mainTexture = Utilities.getTexture("icon", "ForScienceContinued/Textures")});
-      sprite.renderer.sharedMaterial.mainTexture.filterMode = FilterMode.Point;
-      sprite.Setup(38f, 38f);
-      sprite.SetFramerate(currentSettings.getFloat("spriteAnimationFPS"));
-      sprite.SetAnchor(SpriteRoot.ANCHOR_METHOD.UPPER_LEFT);
-      sprite.gameObject.layer = LayerMask.NameToLayer("EzGUI_UI");
-      // normal state
-      UVAnimation normal = new UVAnimation() { name = "Stopped", loopCycles = 0, framerate = currentSettings.getFloat("spriteAnimationFPS") };
-      normal.BuildUVAnim(sprite.PixelCoordToUVCoord(0 * 38, 9 * 38), sprite.PixelSpaceToUVSpace(38, 38), 1, 1, 1);
-
-      // animated state
-      UVAnimation anim = new UVAnimation() { name = "Spinning", loopCycles = -1, framerate = currentSettings.getFloat("spriteAnimationFPS") };
-      anim.BuildWrappedUVAnim(new Vector2(0, sprite.PixelCoordToUVCoord(0, 38).y), sprite.PixelSpaceToUVSpace(38, 38), 56);
-
-      // add animations to button
-      sprite.AddAnimation(normal);
-      sprite.AddAnimation(anim);
-
-      if (currentSettings.getBool("autoScience"))
+  private void AddButton()
+   {
+      if (ApplicationLauncher.Ready && add)
       {
-        setAppLauncherAnimation("on");
-      }
-      else
-      {
-        setAppLauncherAnimation("off");
-      }
+        //base.OnGuiAppLauncherReady();
+        sprite = PackedSprite.Create("ForScience.Button.Sprite", Vector3.zero);
+        sprite.SetMaterial(new Material(Shader.Find("Sprite/Vertex Colored")) { mainTexture = Utilities.getTexture("icon", "ForScienceContinued/Textures")});
+        sprite.renderer.sharedMaterial.mainTexture.filterMode = FilterMode.Point;
+        sprite.Setup(38f, 38f);
+        sprite.SetFramerate(currentSettings.getFloat("spriteAnimationFPS"));
+        sprite.SetAnchor(SpriteRoot.ANCHOR_METHOD.UPPER_LEFT);
+        sprite.gameObject.layer = LayerMask.NameToLayer("EzGUI_UI");
+        // normal state
+        UVAnimation normal = new UVAnimation() { name = "Stopped", loopCycles = 0, framerate = currentSettings.getFloat("spriteAnimationFPS") };
+        normal.BuildUVAnim(sprite.PixelCoordToUVCoord(0 * 38, 9 * 38), sprite.PixelSpaceToUVSpace(38, 38), 1, 1, 1);  
 
-      button = ApplicationLauncher.Instance.AddModApplication(
-          toggleAutoScience, 	//RUIToggleButton.onTrue
-          toggleAutoScience,	//RUIToggleButton.onFalse
-          null, //RUIToggleButton.OnHover
-          null, //RUIToggleButton.onHoverOut
-          null, //RUIToggleButton.onEnable
-          null, //RUIToggleButton.onDisable
-          ApplicationLauncher.AppScenes.FLIGHT, //visibleInScenes
-          sprite//texture
-      );
+        // animated state
+        UVAnimation anim = new UVAnimation() { name = "Spinning", loopCycles = -1, framerate = currentSettings.getFloat("spriteAnimationFPS") };
+        anim.BuildWrappedUVAnim(new Vector2(0, sprite.PixelCoordToUVCoord(0, 38).y), sprite.PixelSpaceToUVSpace(38, 38), 56);
+
+        // add animations to button
+        sprite.AddAnimation(normal);
+        sprite.AddAnimation(anim);  
+
+        if (currentSettings.getBool("autoScience"))
+        {
+          setAppLauncherAnimation("on");
+        }
+        else
+        {
+          setAppLauncherAnimation("off");
+        }
+
+        button = ApplicationLauncher.Instance.AddModApplication(
+            toggleAutoScience, 	//RUIToggleButton.onTrue
+            toggleAutoScience,	//RUIToggleButton.onFalse
+            null, //RUIToggleButton.OnHover
+            null, //RUIToggleButton.onHoverOut
+            null, //RUIToggleButton.onEnable
+            null, //RUIToggleButton.onDisable
+            ApplicationLauncher.AppScenes.FLIGHT, //visibleInScenes
+            sprite//texture
+        );
+      }
     }
-
     private void toggleAutoScience()
     {
       if (Input.GetMouseButtonUp(0))
